@@ -773,6 +773,13 @@ typedef int (*eth_tx_hairpin_queue_setup_t)
 	 uint16_t nb_tx_desc,
 	 const struct rte_eth_hairpin_conf *hairpin_conf);
 
+typedef int (*eth_memcpy_to_dm_t)
+	(struct rte_eth_dev *dev, void *,
+	 int off, size_t len);
+typedef int (*eth_memcpy_from_dm_t)
+	(struct rte_eth_dev *dev, void *,
+	 int off, size_t len);	 
+
 /**
  * @internal
  * Get Forward Error Correction(FEC) capability.
@@ -1403,6 +1410,9 @@ struct eth_dev_ops {
 	eth_cman_config_set_t cman_config_set;
 	/** Retrieve congestion management configuration */
 	eth_cman_config_get_t cman_config_get;
+
+	eth_memcpy_to_dm_t memcpy_to_dm;
+	eth_memcpy_from_dm_t memcpy_from_dm;
 };
 
 /**

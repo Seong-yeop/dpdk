@@ -38,6 +38,8 @@ main(int argc, char **argv)
 		rte_panic("Cannot init EAL\n");
 	/* >8 End of initialization of Environment Abstraction Layer */
 
+	assert(0 < rte_eth_dev_count_avail());
+
 	/* Launches the function on each lcore. 8< */
 	RTE_LCORE_FOREACH_WORKER(lcore_id) {
 		/* Simpler equivalent. 8< */

@@ -466,6 +466,8 @@ struct mlx5_common_device {
 	uint32_t pdn; /* Protection Domain Number. */
 	struct mlx5_mr_share_cache mr_scache; /* Global shared MR cache. */
 	struct mlx5_common_dev_config config; /* Device configuration. */
+	void *dm;
+	int dm_size;
 };
 
 /**
@@ -496,6 +498,12 @@ typedef int (mlx5_class_driver_probe_t)(struct mlx5_common_device *cdev,
  */
 typedef int (mlx5_class_driver_remove_t)(struct mlx5_common_device *cdev);
 
+typedef int (mlx5_class_driver_alloc_dm_t)(struct mlx5_common_device *cdev,
+					   void **addr, size_t *len);
+
+typedef int (mlx5_class_driver_get_dma_map_t)(struct rte_pci_device *pdev,
+					      void *dm, void *addr, uint64_t iova, size_t len);
+
 /** Device already probed can be probed again to check for new ports. */
 #define MLX5_DRV_PROBE_AGAIN 0x0004
 
@@ -508,6 +516,8 @@ struct mlx5_class_driver {
 	const char *name;                     /**< Driver name. */
 	mlx5_class_driver_probe_t *probe;     /**< Device probe function. */
 	mlx5_class_driver_remove_t *remove;   /**< Device remove function. */
+	mlx5_class_driver_alloc_dm_t *alloc_dm; /**< Device memory allocation. */
+	mlx5_class_driver_get_dma_map_t *get_dma_map; /**< Get DMA map. */
 	const struct rte_pci_id *id_table;    /**< ID table, NULL terminated. */
 	uint32_t probe_again:1;
 	/**< Device already probed can be probed again to check new device. */

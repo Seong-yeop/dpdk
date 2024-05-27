@@ -125,6 +125,11 @@ typedef int (pci_dma_map_t)(struct rte_pci_device *dev, void *addr,
 typedef int (pci_dma_unmap_t)(struct rte_pci_device *dev, void *addr,
 			      uint64_t iova, size_t len);
 
+typedef int (pci_alloc_t)(struct rte_pci_device *dev, void **addr,
+				size_t *len);
+typedef int (pci_get_dma_map_t)(struct rte_pci_device *dev, void *addr,
+				uint64_t iova, size_t len);
+
 /**
  * A structure describing a PCI driver.
  */
@@ -133,6 +138,8 @@ struct rte_pci_driver {
 	struct rte_driver driver;          /**< Inherit core driver. */
 	rte_pci_probe_t *probe;            /**< Device probe function. */
 	rte_pci_remove_t *remove;          /**< Device remove function. */
+	pci_alloc_t *alloc_dm;	           /**< alloc device memory function. */
+	pci_get_dma_map_t *get_dma_map;	   /**< device memory dma map function. */
 	pci_dma_map_t *dma_map;		   /**< device dma map function. */
 	pci_dma_unmap_t *dma_unmap;	   /**< device dma unmap function. */
 	const struct rte_pci_id *id_table; /**< ID table, NULL terminated. */

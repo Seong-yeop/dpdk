@@ -550,6 +550,40 @@ rte_pci_remove_device(struct rte_pci_device *pci_dev)
 	TAILQ_REMOVE(&rte_pci_bus.device_list, pci_dev, next);
 }
 
+static int
+pci_alloc_dm(struct rte_device *dev, void **addr, size_t *len)
+{
+	printf("pci_alloc_dm\n");
+	struct rte_pci_device *pdev = RTE_DEV_TO_PCI(dev);
+
+	if (!pdev || !pdev->driver) {
+		rte_errno = EINVAL;
+		return -1;
+	}
+	printf("pdev->driver->alloc_dm\n");
+	if (pdev->driver->alloc_dm)
+		return pdev->driver->alloc_dm(pdev, addr, len);
+
+	rte_errno = ENOTSUP;
+	return -1;
+}
+
+static int
+pci_get_dma_map(struct rte_device *dev, void *addr, uint64_t iova, size_t len)
+{
+	struct rte_pci_device *pdev = RTE_DEV_TO_PCI(dev);
+
+	if (!pdev || !pdev->driver) {
+		rte_errno = EINVAL;
+		return -1;
+	}
+	if (pdev->driver->get_dma_map)
+		return pdev->driver->get_dma_map(pdev, addr, iova, len);
+
+	rte_errno = ENOTSUP;
+	return -1;
+}
+
 static struct rte_device *
 pci_find_device(const struct rte_device *start, rte_dev_cmp_t cmp,
 		const void *data)
@@ -892,6 +926,8 @@ struct rte_pci_bus rte_pci_bus = {
 		.plug = pci_plug,
 		.unplug = pci_unplug,
 		.parse = pci_parse,
+		.alloc_dm = pci_alloc_dm,
+		.get_dma_map = pci_get_dma_map,
 		.devargs_parse = rte_pci_devargs_parse,
 		.dma_map = pci_dma_map,
 		.dma_unmap = pci_dma_unmap,

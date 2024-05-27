@@ -153,6 +153,8 @@ struct mlx5_glue {
 	int (*fork_init)(void);
 	struct ibv_pd *(*alloc_pd)(struct ibv_context *context);
 	int (*dealloc_pd)(struct ibv_pd *pd);
+	int (*get_dm_size)(struct ibv_context *context);
+	struct ibv_dm *(*alloc_dm)(struct ibv_context *context);
 	struct ibv_pd *(*import_pd)(struct ibv_context *context,
 				    uint32_t pd_handle);
 	int (*unimport_pd)(struct ibv_pd *pd);
@@ -203,6 +205,8 @@ struct mlx5_glue {
 	int (*modify_qp)(struct ibv_qp *qp, struct ibv_qp_attr *attr,
 			 int attr_mask);
 	struct ibv_mr *(*reg_mr)(struct ibv_pd *pd, void *addr,
+				 size_t length, int access);
+	struct ibv_mr *(*reg_dm_mr)(struct ibv_pd *pd, struct ibv_dm *dm, void *addr,
 				 size_t length, int access);
 	struct ibv_mr *(*reg_mr_iova)(struct ibv_pd *pd, void *addr,
 				      size_t length, uint64_t iova,

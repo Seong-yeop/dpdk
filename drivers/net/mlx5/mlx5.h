@@ -386,6 +386,8 @@ struct mlx5_hw_q {
 } __rte_cache_aligned;
 
 
+#define MLX5_DM_OFF (0x1000)
+
 #define MLX5_COUNTER_POOLS_MAX_NUM (1 << 15)
 #define MLX5_COUNTERS_PER_POOL 512
 #define MLX5_MAX_PENDING_QUERIES 4
@@ -2136,6 +2138,7 @@ int mlx5_os_capabilities_prepare(struct mlx5_dev_ctx_shared *sh);
 void mlx5_os_free_shared_dr(struct mlx5_priv *priv);
 int mlx5_os_net_probe(struct mlx5_common_device *cdev,
 		      struct mlx5_kvargs_ctrl *mkvlist);
+int  mlx5_os_alloc_dm(struct mlx5_common_device *cdev, void **addr, size_t *len);
 void mlx5_os_dev_shared_handler_install(struct mlx5_dev_ctx_shared *sh);
 void mlx5_os_dev_shared_handler_uninstall(struct mlx5_dev_ctx_shared *sh);
 void mlx5_os_mac_addr_remove(struct rte_eth_dev *dev, uint32_t index);
@@ -2149,6 +2152,10 @@ int mlx5_os_set_allmulti(struct rte_eth_dev *dev, int enable);
 int mlx5_os_set_nonblock_channel_fd(int fd);
 void mlx5_os_mac_addr_flush(struct rte_eth_dev *dev);
 void mlx5_os_net_cleanup(void);
+
+
+int mlx5_memcpy_to_dm(struct rte_eth_dev *dev, void *src, int off, size_t len);
+int mlx5_memcpy_from_dm(struct rte_eth_dev *dev, void *src, int off, size_t len);
 
 /* mlx5_txpp.c */
 

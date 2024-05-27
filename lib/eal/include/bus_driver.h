@@ -154,6 +154,10 @@ typedef int (*rte_bus_devargs_parse_t)(struct rte_devargs *da);
  */
 typedef int (*rte_dev_dma_map_t)(struct rte_device *dev, void *addr,
 				  uint64_t iova, size_t len);
+typedef int (*rte_dev_alloc_dm_t)(struct rte_device *dev, void **addr,
+				  size_t *len);
+typedef int (*rte_dev_get_dma_map_t)(struct rte_device *dev, void *addr,
+				  uint64_t iova, size_t len);
 
 /**
  * Device level DMA unmap function.
@@ -258,6 +262,8 @@ struct rte_bus {
 	rte_bus_plug_t plug;         /**< Probe single device for drivers */
 	rte_bus_unplug_t unplug;     /**< Remove single device from driver */
 	rte_bus_parse_t parse;       /**< Parse a device name */
+	rte_dev_alloc_dm_t alloc_dm;   /**< allocate device memory */
+	rte_dev_get_dma_map_t get_dma_map;   /**< get DMA map for device in the bus */
 	rte_bus_devargs_parse_t devargs_parse; /**< Parse bus devargs */
 	rte_dev_dma_map_t dma_map;   /**< DMA map for device in the bus */
 	rte_dev_dma_unmap_t dma_unmap; /**< DMA unmap for device in the bus */

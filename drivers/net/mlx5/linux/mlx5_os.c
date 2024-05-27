@@ -2555,6 +2555,61 @@ mlx5_os_net_probe(struct mlx5_common_device *cdev,
 		return mlx5_os_auxiliary_probe(cdev, mkvlist);
 }
 
+// int 
+// mlx5_os_alloc_dm(struct mlx5_common_device *cdev, void **addr, size_t *len) 
+// {
+// 	printf("%s\n", __func__);
+//     struct rte_eth_dev *dev;
+//     struct mlx5_priv *priv;
+
+//     DRV_LOG(INFO, "Allocating NIC memory\n");
+
+//     priv = dev->data->dev_private;
+//     *addr = (void *) MLX5_DM_OFF; // Ensure MLX5_DM_OFF is defined properly
+//     *len = priv->sh->dm_size;
+//     return 0;
+// }
+
+int 
+mlx5_os_alloc_dm(struct mlx5_common_device *cdev, void **addr, size_t *len)
+{
+    printf("%s\n", __func__);
+    // struct rte_eth_dev *dev = NULL;
+    // struct mlx5_priv *priv;
+    // uint16_t port_id;
+    // int found = 0;
+
+    DRV_LOG(INFO, "Allocating NIC memory\n");
+
+    /* Loop over available devices to find a matching mlx5 device */
+    // RTE_ETH_FOREACH_DEV(port_id) {
+    //     struct rte_eth_dev_info dev_info;
+    //     rte_eth_dev_info_get(port_id, &dev_info);
+    //     if (strncmp(dev_info.driver_name, "net_mlx5", 8) == 0) {
+    //         printf("Mellanox device found at port %u\n", port_id);
+    //         found = 1;
+    //         break;
+    //     }
+    // }
+	// port_id = 0;
+	// dev = &rte_eth_devices[port_id];
+
+    // if (!dev || !dev->data || !dev->data->dev_private) {
+    //     DRV_LOG(ERR, "Device structure not properly initialized\n");
+    //     return -1;
+    // }
+
+    // priv = dev->data->dev_private;
+    // if (!priv || !priv->sh) {
+    //     DRV_LOG(ERR, "Shared data structure not available\n");
+    //     return -1;
+    // }
+
+    *addr = (void *)(uintptr_t)MLX5_DM_OFF; // Cast to pointer type
+    *len = cdev->dm_size;
+    return 0; // Success
+}
+
 /**
  * Cleanup resources when the last device is closed.
  */
@@ -2809,6 +2864,22 @@ mlx5_os_set_allmulti(struct rte_eth_dev *dev, int enable)
 
 	return mlx5_nl_allmulti(priv->nl_socket_route,
 				mlx5_ifindex(dev), !!enable);
+}
+
+int
+mlx5_memcpy_to_dm(struct rte_eth_dev *dev, void *src, int off, size_t len)
+{
+	struct mlx5_priv *priv = dev->data->dev_private;
+	struct mlx5_dev_ctx_shared *sh = priv->sh;
+	return ibv_memcpy_to_dm(sh->cdev->dm, off, src, len);
+}
+
+int
+mlx5_memcpy_from_dm(struct rte_eth_dev *dev, void *dst, int off, size_t len)
+{
+	struct mlx5_priv *priv = dev->data->dev_private;
+	struct mlx5_dev_ctx_shared *sh = priv->sh;
+	return ibv_memcpy_from_dm(dst, sh->cdev->dm, off, len);
 }
 
 /**

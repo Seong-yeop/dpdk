@@ -18,7 +18,11 @@ extern "C" {
 
 int mlx5_common_dev_probe(struct rte_device *eal_dev);
 int mlx5_common_dev_remove(struct rte_device *eal_dev);
+int mlx5_common_dev_alloc_dm(struct rte_device *pci_dev, void **addr,
+			 size_t *len);
 int mlx5_common_dev_dma_map(struct rte_device *dev, void *addr, uint64_t iova,
+			    size_t len);
+int mlx5_common_dev_get_dma_map(struct rte_device *dev, void *addr, uint64_t iova,
 			    size_t len);
 int mlx5_common_dev_dma_unmap(struct rte_device *dev, void *addr, uint64_t iova,
 			      size_t len);

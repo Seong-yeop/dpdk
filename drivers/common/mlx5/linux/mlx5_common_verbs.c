@@ -143,6 +143,30 @@ mlx5_common_verbs_dereg_mr(struct mlx5_pmd_mr *pmd_mr)
 	}
 }
 
+int
+mlx5_common_verbs_reg_dm_mr(void *pd, void *dm, void *addr, size_t length,
+			 struct mlx5_pmd_mr *pmd_mr)
+{
+	printf("mlx5_common_verbs_reg_dm_mr\n");
+	struct ibv_mr *ibv_mr;
+
+	memset(pmd_mr, 0, sizeof(*pmd_mr));
+	ibv_mr = mlx5_glue->reg_dm_mr(pd, dm, addr, length,
+				   IBV_ACCESS_LOCAL_WRITE |
+				   IBV_ACCESS_ZERO_BASED);
+	if (!ibv_mr)
+		return -1;
+
+	*pmd_mr = (struct mlx5_pmd_mr){
+		.lkey = ibv_mr->lkey,
+		.addr = ibv_mr->addr,
+		.len = ibv_mr->length,
+		.obj = (void *)ibv_mr,
+	};
+	return 0;
+}
+
+
 /**
  * Set the reg_mr and dereg_mr callbacks.
  *
@@ -152,8 +176,9 @@ mlx5_common_verbs_dereg_mr(struct mlx5_pmd_mr *pmd_mr)
  *   Pointer to dereg_mr func
  */
 void
-mlx5_os_set_reg_mr_cb(mlx5_reg_mr_t *reg_mr_cb, mlx5_dereg_mr_t *dereg_mr_cb)
+mlx5_os_set_reg_mr_cb(mlx5_reg_mr_t *reg_mr_cb, mlx5_dereg_mr_t *dereg_mr_cb, mlx5_reg_dm_mr_t *reg_dm_mr_cb)
 {
 	*reg_mr_cb = mlx5_common_verbs_reg_mr;
 	*dereg_mr_cb = mlx5_common_verbs_dereg_mr;
+	*reg_dm_mr_cb = mlx5_common_verbs_reg_dm_mr;
 }

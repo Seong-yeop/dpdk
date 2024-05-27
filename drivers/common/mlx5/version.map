@@ -9,8 +9,10 @@ INTERNAL {
 
 	mlx5_common_init;
 
+	mlx5_create_dm_mr_ext;
 	mlx5_common_verbs_reg_mr; # WINDOWS_NO_EXPORT
 	mlx5_common_verbs_dereg_mr; # WINDOWS_NO_EXPORT
+	mlx5_common_verbs_reg_dm_mr; # WINDOWS_NO_EXPORT
 
 	mlx5_dev_is_pci;
 	mlx5_dev_is_vf_pci;

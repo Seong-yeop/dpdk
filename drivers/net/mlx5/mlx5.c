@@ -1559,6 +1559,11 @@ mlx5_alloc_shared_dev_ctx(const struct mlx5_dev_spawn_data *spawn,
 		sh->port[i].devx_ih_port_id = RTE_MAX_ETHPORTS;
 		sh->port[i].nl_ih_port_id = RTE_MAX_ETHPORTS;
 	}
+	sh->cdev->dm_size = mlx5_glue->get_dm_size(sh->cdev->ctx);
+	sh->cdev->dm_size = sh->cdev->dm_size ? sh->cdev->dm_size - MLX5_DM_OFF : 0;
+	sh->cdev->dm = mlx5_glue->alloc_dm(sh->cdev->ctx);
+	if (sh->cdev->dm == NULL)
+		DRV_LOG(ERR, "\n  [-] Device memory allocation failure. Continuing!!!");
 	if (sh->cdev->config.devx) {
 		sh->td = mlx5_devx_cmd_create_td(sh->cdev->ctx);
 		if (!sh->td) {
@@ -2229,6 +2234,8 @@ const struct eth_dev_ops mlx5_dev_ops = {
 	.hairpin_queue_peer_bind = mlx5_hairpin_queue_peer_bind,
 	.hairpin_queue_peer_unbind = mlx5_hairpin_queue_peer_unbind,
 	.get_monitor_addr = mlx5_get_monitor_addr,
+	.memcpy_to_dm = mlx5_memcpy_to_dm,
+	.memcpy_from_dm = mlx5_memcpy_from_dm,
 };
 
 /* Available operations from secondary process. */
@@ -3145,6 +3152,7 @@ static struct mlx5_class_driver mlx5_net_driver = {
 	.id_table = mlx5_pci_id_map,
 	.probe = mlx5_os_net_probe,
 	.remove = mlx5_net_remove,
+	.alloc_dm = mlx5_os_alloc_dm, 
 	.probe_again = 1,
 	.intr_lsc = 1,
 	.intr_rmv = 1,

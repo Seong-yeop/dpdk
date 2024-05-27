@@ -332,6 +332,10 @@ EXPERIMENTAL {
 	rte_dev_dma_map;
 	rte_dev_dma_unmap;
 
+	rte_dev_alloc_dm;
+	rte_dev_get_dma_map;
+
+
 	# added in 20.05
 	__rte_eal_trace_alarm_cancel;
 	__rte_eal_trace_alarm_set;

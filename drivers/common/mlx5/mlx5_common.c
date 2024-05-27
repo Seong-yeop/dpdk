@@ -1067,6 +1067,98 @@ mlx5_common_dev_remove(struct rte_device *eal_dev)
 	return ret;
 }
 
+int
+mlx5_common_dev_alloc_dm(struct rte_device *pci_dev, void **addr,
+			 size_t *len)
+{
+	printf("%s\n", __func__);
+	// CALL PCI DRIVER ALLOC DM ? 
+	struct mlx5_common_device *dev;
+	struct mlx5_class_driver *driver;
+	int ret = -EINVAL;
+
+	dev = to_mlx5_device(pci_dev);
+	printf("%s: dev=%p\n", __func__, dev);
+	if (!dev)
+		return -ENODEV;
+	TAILQ_FOREACH(driver, &drivers_list, next) {
+		printf("tailq\n");
+		if (driver->drv_class &&
+		    driver->alloc_dm) {
+			printf("%s: driver->alloc_dm\n", __func__);
+			ret = driver->alloc_dm(dev, addr,
+							 len);
+			if (ret)
+				return ret;
+		}
+	}
+	printf("%s: ret=%d\n", __func__, ret);
+	return ret;
+}
+
+
+// TODO: Implement this function
+int
+mlx5_common_dev_get_dma_map(struct rte_device *rte_dev, void *addr,
+			    uint64_t iova, size_t len)
+{
+	struct mlx5_common_device *dev;
+	struct mlx5_mr_btree *bt;
+	struct mlx5_mr *mr;
+
+	dev = to_mlx5_device(rte_dev);
+	if (!dev) {
+		DRV_LOG(WARNING,
+			"Unable to find matching mlx5 device to device %s",
+			rte_dev->name);
+		rte_errno = ENODEV;
+		return -1;
+	}
+	mr = mlx5_create_dm_mr_ext(dev->pd, dev->dm, (uintptr_t)addr, len,
+				   SOCKET_ID_ANY, dev->mr_scache.reg_dm_mr_cb);
+
+	if (!mr) {
+		DRV_LOG(WARNING, "Device %s unable to DMA map", rte_dev->name);
+		rte_errno = EINVAL;
+		return -1;
+	}
+try_insert:
+	rte_rwlock_write_lock(&dev->mr_scache.rwlock);
+	bt = &dev->mr_scache.cache;
+	if (bt->len == bt->size) {
+		uint32_t size;
+		int ret;
+
+		size = bt->size + 1;
+		MLX5_ASSERT(size > bt->size);
+		/*
+		 * Avoid deadlock (numbers show the sequence of events):
+		 *    mlx5_mr_create_primary():
+		 *        1) take EAL memory lock
+		 *        3) take MR lock
+		 *    this function:
+		 *        2) take MR lock
+		 *        4) take EAL memory lock while allocating the new cache
+		 * Releasing the MR lock before step 4
+		 * allows another thread to execute step 3.
+		 */
+		rte_rwlock_write_unlock(&dev->mr_scache.rwlock);
+		ret = mlx5_mr_expand_cache(&dev->mr_scache, size,
+					   rte_dev->numa_node);
+		if (ret < 0) {
+			mlx5_mr_free(mr, dev->mr_scache.dereg_mr_cb);
+			rte_errno = ret;
+			return -1;
+		}
+		goto try_insert;
+	}
+	LIST_INSERT_HEAD(&dev->mr_scache.mr_list, mr, mr);
+	/* Insert to the global cache table. */
+	mlx5_mr_insert_cache(&dev->mr_scache, mr);
+	rte_rwlock_write_unlock(&dev->mr_scache.rwlock);
+	return 0;
+}
+
 /**
  * Callback to DMA map external memory to a device.
  *
