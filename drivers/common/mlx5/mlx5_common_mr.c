@@ -1186,6 +1186,7 @@ struct mlx5_mr *
 mlx5_create_mr_ext(void *pd, uintptr_t addr, size_t len, int socket_id,
 		   mlx5_reg_mr_t reg_mr_cb)
 {
+	printf("%s\n", __func__);
 	struct mlx5_mr *mr = NULL;
 
 	mr = mlx5_malloc(MLX5_MEM_RTE | MLX5_MEM_ZERO,
@@ -1707,7 +1708,7 @@ mlx5_mempool_reg_detach(struct mlx5_mempool_reg *mpr)
 
 static int
 mlx5_mr_mempool_register_primary(struct mlx5_mr_share_cache *share_cache,
-				 void *pd, struct rte_mempool *mp,
+				 void *pd, void *dm, struct rte_mempool *mp,
 				 bool is_extmem)
 {
 	struct mlx5_range *ranges = NULL;
@@ -1770,6 +1771,7 @@ mlx5_mr_mempool_register_primary(struct mlx5_mr_share_cache *share_cache,
 		const struct mlx5_range *range = &ranges[i];
 		size_t len = range->end - range->start;
 
+		if (!is_extmem) {
 		if (share_cache->reg_mr_cb(pd, (void *)range->start, len,
 		    &mr->pmd_mr) < 0) {
 			DRV_LOG(ERR,
@@ -1777,6 +1779,17 @@ mlx5_mr_mempool_register_primary(struct mlx5_mr_share_cache *share_cache,
 				"[0x%" PRIxPTR ", 0x%" PRIxPTR "] (%zu bytes) for mempool %s",
 				pd, range->start, range->end, len, mp->name);
 			break;
+		}
+		}
+		else {
+			if (share_cache->reg_dm_mr_cb(pd, dm, (void *)range->start, len,
+		    &mr->pmd_mr) < 0) {
+			DRV_LOG(ERR,
+				"Failed to create an MR in PD %p for address range "
+				"[0x%" PRIxPTR ", 0x%" PRIxPTR "] (%zu bytes) for mempool %s",
+				pd, range->start, range->end, len, mp->name);
+			break;
+		}
 		}
 		DRV_LOG(DEBUG,
 			"Created a new MR %#x in PD %p for address range "
@@ -1847,7 +1860,7 @@ mlx5_mr_mempool_register(struct mlx5_common_device *cdev,
 	switch (rte_eal_process_type()) {
 	case RTE_PROC_PRIMARY:
 		return mlx5_mr_mempool_register_primary(&cdev->mr_scache,
-							cdev->pd, mp,
+							cdev->pd, cdev->dm, mp,
 							is_extmem);
 	case RTE_PROC_SECONDARY:
 		return mlx5_mr_mempool_register_secondary(cdev, mp, is_extmem);

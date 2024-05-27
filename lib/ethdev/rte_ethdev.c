@@ -6318,6 +6318,40 @@ rte_eth_buffer_split_get_supported_hdr_ptypes(uint16_t port_id, uint32_t *ptypes
 	return j;
 }
 
+int
+rte_eth_memcpy_to_dm(uint16_t port_id, void *src, int off, size_t size)
+{
+	struct rte_eth_dev *dev = &rte_eth_devices[port_id];
+
+#ifdef RTE_LIBRTE_ETHDEV_DEBUG
+	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, 0);
+	RTE_FUNC_PTR_OR_ERR_RET(*dev->tx_pkt_burst, 0);
+
+	if (queue_id >= dev->data->nb_tx_queues) {
+		RTE_ETHDEV_LOG(ERR, "Invalid TX queue_id=%u\n", queue_id);
+		return 0;
+	}
+#endif
+	return (*dev->dev_ops->memcpy_to_dm)(dev, src, off, size);
+}
+
+int
+rte_eth_memcpy_from_dm(uint16_t port_id, void *dst, int off, size_t size)
+{
+	struct rte_eth_dev *dev = &rte_eth_devices[port_id];
+
+#ifdef RTE_LIBRTE_ETHDEV_DEBUG
+	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, 0);
+	RTE_FUNC_PTR_OR_ERR_RET(*dev->tx_pkt_burst, 0);
+
+	if (queue_id >= dev->data->nb_tx_queues) {
+		RTE_ETHDEV_LOG(ERR, "Invalid TX queue_id=%u\n", queue_id);
+		return 0;
+	}
+#endif
+	return (*dev->dev_ops->memcpy_from_dm)(dev, dst, off, size);
+}
+
 RTE_LOG_REGISTER_DEFAULT(rte_eth_dev_logtype, INFO);
 
 RTE_INIT(ethdev_init_telemetry)

@@ -6456,6 +6456,12 @@ rte_eth_tx_buffer(uint16_t port_id, uint16_t queue_id,
 	return rte_eth_tx_buffer_flush(port_id, queue_id, buffer);
 }
 
+static __rte_always_inline int
+rte_eth_memcpy_to_dm(uint16_t port_id, void *src, int off, size_t size);
+
+static __rte_always_inline int
+rte_eth_memcpy_from_dm(uint16_t port_id, void *dst, int off, size_t size);
+
 /**
  * @warning
  * @b EXPERIMENTAL: this API may change without prior notice

@@ -286,36 +286,44 @@ contruct_ping_packet(void)
 {
     unsigned pkt_size = pktlen;
     struct rte_mbuf *pkt;
-    // struct rte_mbuf *pkt2;
+    struct rte_mbuf *pkt2;
     struct rte_ether_hdr *eth_hdr;
     struct rte_ipv4_hdr *ip_hdr;
     struct rte_udp_hdr *udp_hdr;
 
     pkt = rte_pktmbuf_alloc(pingpong_pktmbuf_pool);
+    printf("pkt alloc\n");
+    // pkt = rte_pktmbuf_alloc(nicmem_pktmbuf_pool);
     if (!pkt)
         rte_log(RTE_LOG_ERR, RTE_LOGTYPE_PINGPONG, "fail to alloc mbuf for packet\n");
+    printf("pkt alloc done\n"); 
 
-	pkt->data_len = pkt_size;
-    pkt->next = NULL;
-
-    // if (nicmem)
-	//     pkt->data_len = HDR_LENGTH;
-    // else
-	//     pkt->data_len = pkt_size;
-    // if (nicmem) {
-	//     pkt2 = rte_pktmbuf_alloc(nicmem_pktmbuf_pool);
-	//     pkt2->data_len = pkt_size - HDR_LENGTH;
-	//     pkt2->next = NULL;
-	//     pkt->next = pkt2;
-    // } else {
-	//     pkt->next = NULL;
-    // }
+	// pkt->data_len = pkt_size;
+    // pkt->next = NULL;
+    if (nicmem)
+	    pkt->data_len = HDR_LENGTH;
+    else
+	    pkt->data_len = pkt_size;
+    if (nicmem) {
+	    pkt2 = rte_pktmbuf_alloc(nicmem_pktmbuf_pool);
+	    pkt2->data_len = pkt_size - HDR_LENGTH;
+	    pkt2->next = NULL;
+	    pkt->next = pkt2;
+    } else {
+	    pkt->next = NULL;
+    }
 
     /* Initialize Ethernet header. */
+    printf("pkt init\n");
     eth_hdr = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
+    printf("eth_hdr done\n");
+
+    printf("rte_ether_addr_copy\n");
+    // TODO: change to mlx5_memcpy_to_dm ??
     rte_ether_addr_copy(&server_ether_addr, &eth_hdr->dst_addr);
     rte_ether_addr_copy(&client_ether_addr, &eth_hdr->src_addr);
     eth_hdr->ether_type = rte_cpu_to_be_16(RTE_ETHER_TYPE_IPV4);
+    printf("rte_ether_addr_copy done\n");
 
     /* Initialize IP header. */
     ip_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
@@ -341,12 +349,16 @@ contruct_ping_packet(void)
     udp_hdr->dgram_len = rte_cpu_to_be_16(pkt_size -
                                           sizeof(*eth_hdr) -
                                           sizeof(*ip_hdr));
-    pkt->nb_segs = 1;
+    if (nicmem)
+        pkt->nb_segs = 2;
+    else
+        pkt->nb_segs = 1;
     pkt->pkt_len = pkt_size;
     pkt->l2_len = sizeof(struct rte_ether_hdr);
     pkt->l3_len = sizeof(struct rte_ipv4_hdr);
     pkt->l4_len = sizeof(struct rte_udp_hdr);
 
+    printf("pkt done\n");
     return pkt;
 }
 
